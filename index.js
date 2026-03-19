@@ -49,10 +49,13 @@ app.post('/book', async (req, res) => {
     });
 
     // Send Twilio SMS
+    const cleanPhone = Phone.replace(/\D/g, '');
+    const formattedPhone = '+1' + cleanPhone;
+
     await twilioClient.messages.create({
       body: `Hi ${Name}, your Skyline Roofing inspection is confirmed at ${Address} on ${DateTime}. Questions? Call us anytime!`,
       from: TWILIO_PHONE_NUMBER,
-      to: Phone,
+      to: formattedPhone,
     });
 
     return res.json({ result: 'success', message: 'Appointment confirmed' });
