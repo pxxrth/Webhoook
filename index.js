@@ -49,7 +49,7 @@ app.post('/book', async (req, res) => {
     });
 
     // Send Twilio SMS
-    const cleanPhone = Phone.replace(/\D/g, '');
+    const cleanPhone = String(Phone).replace(/\D/g, '');
     const formattedPhone = '+1' + cleanPhone;
 
     await twilioClient.messages.create({
