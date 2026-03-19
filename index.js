@@ -6,10 +6,10 @@ const app = express();
 app.use(express.json());
 
 // Your credentials
-const TWILIO_ACCOUNT_SID = 'YOUR_TWILIO_ACCOUNT_SID';
-const TWILIO_AUTH_TOKEN = 'YOUR_TWILIO_AUTH_TOKEN';
-const TWILIO_PHONE_NUMBER = 'YOUR_TWILIO_PHONE_NUMBER';
-const GOOGLE_CALENDAR_ID = 'YOUR_GOOGLE_CALENDAR_ID';
+const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID;
+const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN;
+const TWILIO_PHONE_NUMBER = process.env.TWILIO_PHONE_NUMBER;
+const GOOGLE_CALENDAR_ID = process.env.GOOGLE_CALENDAR_ID;
 
 // Google Calendar Auth
 const auth = new google.auth.GoogleAuth({
