@@ -37,12 +37,24 @@ app.get('/get-date', (req, res) => {
 app.post('/book', async (req, res) => {
   const { Name, Phone, Address, DateTime } = req.body;
 
+  // Validate DateTime
+  const parsedDate = new Date(DateTime);
+  if (!DateTime || isNaN(parsedDate.getTime())) {
+    return res.json({
+      result: 'error',
+      message: `Invalid date format received: "${DateTime}". You must convert the date to ISO 8601 format before calling this tool. Example: "Saturday March 22 2026 at 10am" must be sent as "2026-03-22T10:00:00".`
+    });
+  }
+
+  const timeMin = parsedDate.toISOString();
+  const timeMax = new Date(parsedDate.getTime() + 60 * 60 * 1000).toISOString();
+
   try {
     // Check if slot is available
     const existingEvents = await calendar.events.list({
       calendarId: GOOGLE_CALENDAR_ID,
-      timeMin: new Date(DateTime).toISOString(),
-      timeMax: new Date(new Date(DateTime).getTime() + 60 * 60 * 1000).toISOString(),
+      timeMin: timeMin,
+      timeMax: timeMax,
       singleEvents: true,
     });
 
@@ -57,27 +69,26 @@ app.post('/book', async (req, res) => {
         summary: `Inspection: ${Name}`,
         location: Address,
         description: `Customer: ${Name} | Phone: ${Phone} | Address: ${Address}`,
-        start: { 
-          dateTime: DateTime, 
-          timeZone: 'America/Toronto' 
+        start: {
+          dateTime: timeMin,
+          timeZone: 'America/Toronto'
         },
-        end: { 
-          dateTime: new Date(new Date(DateTime).getTime() + 60 * 60 * 1000).toISOString(), 
-          timeZone: 'America/Toronto' 
+        end: {
+          dateTime: timeMax,
+          timeZone: 'America/Toronto'
         },
       },
     });
 
     // Format date and time for SMS
-    const appointmentDate = new Date(DateTime);
-    const formattedDate = appointmentDate.toLocaleDateString('en-US', {
+    const formattedDate = parsedDate.toLocaleDateString('en-US', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
       day: 'numeric',
       timeZone: 'America/Toronto'
     });
-    const formattedTime = appointmentDate.toLocaleTimeString('en-US', {
+    const formattedTime = parsedDate.toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit',
       timeZone: 'America/Toronto'
