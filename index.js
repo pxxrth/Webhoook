@@ -20,6 +20,18 @@ const auth = new google.auth.GoogleAuth({
 const calendar = google.calendar({ version: 'v3', auth });
 const twilioClient = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
 
+app.post('/get-date', (req, res) => {
+  const now = new Date();
+  const formatted = now.toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    timeZone: 'America/Toronto'
+  });
+  res.json({ result: 'success', date: formatted });
+});
+
 app.post('/book', async (req, res) => {
   const { Name, Phone, Address, DateTime } = req.body;
 
