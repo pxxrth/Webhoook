@@ -5,7 +5,7 @@ const twilio = require('twilio');
 const app = express();
 app.use(express.json());
 
-// Your credentials
+// Credentials from environment variables
 const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID;
 const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN;
 const TWILIO_PHONE_NUMBER = process.env.TWILIO_PHONE_NUMBER;
@@ -20,7 +20,8 @@ const auth = new google.auth.GoogleAuth({
 const calendar = google.calendar({ version: 'v3', auth });
 const twilioClient = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
 
-app.post('/get-date', (req, res) => {
+// Get current date route
+app.get('/get-date', (req, res) => {
   const now = new Date();
   const formatted = now.toLocaleDateString('en-US', {
     weekday: 'long',
@@ -32,6 +33,7 @@ app.post('/get-date', (req, res) => {
   res.json({ result: 'success', date: formatted });
 });
 
+// Book appointment route
 app.post('/book', async (req, res) => {
   const { Name, Phone, Address, DateTime } = req.body;
 
@@ -48,16 +50,37 @@ app.post('/book', async (req, res) => {
       return res.json({ result: 'That time is taken' });
     }
 
-    // Create the event
+    // Create the calendar event
     await calendar.events.insert({
       calendarId: GOOGLE_CALENDAR_ID,
       requestBody: {
         summary: `Inspection: ${Name}`,
         location: Address,
         description: `Customer: ${Name} | Phone: ${Phone} | Address: ${Address}`,
-        start: { dateTime: new Date(DateTime).toISOString(), timeZone: 'America/Toronto' },
-        end: { dateTime: new Date(new Date(DateTime).getTime() + 60 * 60 * 1000).toISOString(), timeZone: 'America/Toronto' },
+        start: { 
+          dateTime: DateTime, 
+          timeZone: 'America/Toronto' 
+        },
+        end: { 
+          dateTime: new Date(new Date(DateTime).getTime() + 60 * 60 * 1000).toISOString(), 
+          timeZone: 'America/Toronto' 
+        },
       },
+    });
+
+    // Format date and time for SMS
+    const appointmentDate = new Date(DateTime);
+    const formattedDate = appointmentDate.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      timeZone: 'America/Toronto'
+    });
+    const formattedTime = appointmentDate.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'America/Toronto'
     });
 
     // Send Twilio SMS
@@ -65,7 +88,7 @@ app.post('/book', async (req, res) => {
     const formattedPhone = '+1' + cleanPhone;
 
     await twilioClient.messages.create({
-      body: `Hi ${Name}, your Skyline Roofing inspection is confirmed at ${Address} on ${DateTime}. Questions? Call us anytime!`,
+      body: `Hi ${Name}, your Skyline Roofing inspection is confirmed at ${Address} on ${formattedDate} at ${formattedTime}. Questions? Call us anytime!`,
       from: TWILIO_PHONE_NUMBER,
       to: formattedPhone,
     });
